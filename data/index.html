@@ -110,6 +110,28 @@ body {padding-top: 50px;}
 <div class="container"><div class="row">&nbsp;</div></div>
 <!-- 文件管理 -->
 <div class="nav-tab hidden" id="fs">
+
+	<div class="container">
+		<div class="row">
+			<div class="col-md-2">系统空间</div>
+			<div class="col-md-4" id="fs_totalBytes">&nbsp;</div>
+			<div class="col-md-2">已用空间</div>
+			<div class="col-md-4" id="fs_usedBytes">&nbsp;</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">SPIFFS块大小</div>
+			<div class="col-md-4" id="fs_blockSize">&nbsp;</div>
+			<div class="col-md-2">SPIFFS逻辑页数大小</div>
+			<div class="col-md-4" id="fs_pageSize">&nbsp;</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">同时打开文件数</div>
+			<div class="col-md-4" id="fs_maxOpenFiles">&nbsp;</div>
+			<div class="col-md-2">文件名最大长度</div>
+			<div class="col-md-4" id="fs_maxPathLength">&nbsp;</div>
+		</div>
+	</div>
+	<div class="container"><div class="row">&nbsp;</div></div>
 	<div class="container">
 		<table class="table table-striped">
 		<thead><tr>
@@ -120,7 +142,6 @@ body {padding-top: 50px;}
 		<tbody>
 		</tbody>
 		</table>
-		删除功能还没写
   </div>
 </div>
 
@@ -157,21 +178,57 @@ $(function(){
 				}
 			});
 		}
+		
+		//格式化文件字节
+		function fs_size(sz){
+			if(sz>1024*1024){return Math.floor(sz/1024.0/1024.0)+" MB";}
+			else if (sz>1024){return Math.floor(sz/1024.0)+" KB";}
+			else{ return sz+" B";}
+		}
 
 		//文件管理
 		if(!$("#fs").hasClass("hidden")){
+			//读取spiffs信息
+			$.getJSON("/getFS?r="+Math.random(),{},function(data){
+				if(data.result=="true"){
+					$("#fs_totalBytes").text(fs_size(data.totalBytes));
+					$("#fs_usedBytes").text(fs_size(data.usedBytes)+" ("+Math.floor(data.usedBytes*100/data.totalBytes)+" %)");
+					$("#fs_blockSize").text(fs_size(data.blockSize));
+					$("#fs_pageSize").text(fs_size(data.pageSize));
+					$("#fs_maxOpenFiles").text(data.maxOpenFiles+" 个");
+					$("#fs_maxPathLength").text(data.maxPathLength+" 个字符(包含最前面的斜线/)");
+				}else{
+					alert("未知异常");
+				}
+			});
+
+
+			//读取文件列表
 			$("#fs table tbody").empty();
 			$.getJSON("/getUserDir?r="+Math.random(),{},function(data){
 				if(data.result=="true"){
 					var ws = data.files;
 					for(var w in ws){
 						$("#fs table tbody").append('<tr>'+
-							'<td class="text-center">'+ws[w].name+'</td>'+
-							'<td class="text-center">'+ws[w].size+'</td>'+
-							'<td class="text-center"><button class="btn btn-danger" onclick="$(this).parents(\'tr\').remove()">删除</button></td></tr>');
+							'<td class="text-center"><a target="_blank" href="'+ws[w].name+'">'+ws[w].name+'</a></td>'+
+							'<td class="text-center">'+fs_size(ws[w].size)+'</td>'+
+							'<td class="text-center"><button class="btn btn-danger" n="'+ws[w].name+'">删除</button></td></tr>');
 					}
+					//增加删除事件
+					$("#fs table tbody .btn").click(function(){
+						$.getJSON("/deleteFS?r="+Math.random(),{"n":($(this).attr("n"))},function(data){
+							if(data.result=="true"){
+								$("#fs table tbody .btn[n='"+ws[w].name+"']").parent().parent().hide(500).remove();
+							}else{
+								alert(data.msg);
+							}
+						});	
+					});
 				}else{
-					alert(data.msg);
+					$("#fs table tbody").append('<tr>'+
+							'<td class="text-center"></td>'+
+							'<td class="text-center">'+data.msg+'</td>'+
+							'<td class="text-center"></td></tr>');
 				}
 			});
 		}

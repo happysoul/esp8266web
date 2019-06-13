@@ -271,7 +271,7 @@ void restartESP(){
   ESP.restart();
 }
 
-
+//读取用户目录下的文件夹列表
 void getUserDir(){
   DynamicJsonDocument doc(512);
   JsonObject jo = doc.to<JsonObject>();
@@ -300,11 +300,88 @@ void getUserDir(){
   server.send(200, "application/json", output);
 }
 
-
-void getFS(){
-  
-
+//删除fs文件
+void deleteFS(){
+  if(server.hasArg("n")){
+    String n = server.arg("n");
+    if(n.length()>31 || n.length()==0){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,参数长度异常\"}");return;}
+    if(n.indexOf("..")>-1 || n.indexOf("/u/")!=0){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,参数非法\"}");return;}
+    if(!SPIFFS.exists(n)){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,文件不存在\"}");return;}
+    else{SPIFFS.remove(n);server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"删除成功\"}");return;}
+  }else{
+    server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,参数缺失\"}"); 
+  }
 }
+
+/*
+    size_t totalBytes;//整个文件系统的大小
+    size_t usedBytes;//文件系统所有文件占用的大小
+    size_t blockSize;//SPIFFS块大小
+    size_t pageSize;//SPIFFS逻辑页数大小
+    size_t maxOpenFiles;//能够同时打开的文件最大个数
+    size_t maxPathLength;//文件名最大长度（包括一个字节的字符串结束符）
+ */
+//获取spiffs文件系统信息
+void getFS(){
+  DynamicJsonDocument doc(512);
+  JsonObject jo = doc.to<JsonObject>();
+  
+  FSInfo fs;
+  SPIFFS.info(fs);
+
+  jo["result"]="true";
+  jo["msg"]="文件系统信息读取完成";
+  jo["totalBytes"]=String(fs.totalBytes);
+  jo["usedBytes"]=String(fs.usedBytes);
+  jo["blockSize"]=String(fs.blockSize);
+  jo["pageSize"]=String(fs.pageSize);
+  jo["maxOpenFiles"]=String(fs.maxOpenFiles);
+  jo["maxPathLength"]=String(fs.maxPathLength);
+  
+  String output;
+  serializeJson(doc, output);
+  server.send(200, "application/json", output);
+}
+
+
+//上传文件
+void uploadFS(){
+  //上传
+  File fsUploadFile;
+  HTTPUpload& upload = server.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+
+    String filename = upload.filename;
+    
+    
+    //文件名、长度等基础信息校验
+    if(filename.lenght()>29 || filename.indexOf(" ")>-1){
+      server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"上传失败,文件长度需要小于29,且不能有非字母数字的字符\"}");
+    }
+    
+    
+    if (!filename.startsWith("/")) {
+      filename = "/" + filename;
+    }
+    filename = "/u"+filename;
+    Serial.print("handleFileUpload Name: ");Serial.println(filename);
+    fsUploadFile = SPIFFS.open(filename, "w");
+    filename = String();
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    }
+    Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
+  }
+  
+  server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传成功\"}");
+}
+
 
 // 主程序入口
 void setup() {
@@ -386,8 +463,12 @@ void setup() {
   server.on("/led", handleLed);//led灯
   server.on("/configWifi", configWifi);//配置网络
   server.on("/scanWifi", scanWifi);//扫wifi
-  server.on("/getUserDir", getUserDir);//读取spiffs文件系统
+  server.on("/getFS", getFS);//读取spiffs文件系统
+  server.on("/deleteFS", deleteFS);//删除spiffs文件
+  server.on("/uploadFS", uploadFS);//删除spiffs文件
+  server.on("/getUserDir", getUserDir);//读取spiffs用户文件
   server.on("/restartESP", restartESP);//重启esp8266
+  
   server.onNotFound(handleNotFound); // NotFound处理，图片、js、css等也会走这里
   server.begin();
   Serial.println("HTTP server started");
