@@ -20,9 +20,8 @@
 	工具 - 开发板 - 开发板管理器 搜索esp8266并安装，如果没有这个选择先配网址<br>
 	文件 - 首选项，开发版管理网址输入：https://arduino.esp8266.com/stable/package_esp8266com_index.json 确定后在上一步位置再搜索esp8266<br>
 	安装大约需要下载100M-200M的文件<br>
-- 2、ArduinoJSON（项目-加载库-搜索ArduinoJSON并安装）
-- 3、ESP8266FS 下载文件<br>
-	https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.4.0/ESP8266FS-0.4.0.zip<br>
+- 2、[ArduinoJSON](https://github.com/bblanchon/ArduinoJson)（项目-加载库-搜索ArduinoJSON并安装）
+- 3、[ESP8266FS](https://github.com/esp8266/arduino-esp8266fs-plugin)  / [下载文件](https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.4.0/ESP8266FS-0.4.0.zip)<br>
 	解压缩文件 arduino-1.8.9\tools\ESP8266FS\tool\esp8266fs.jar<br>
 	重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能<br>
 	
