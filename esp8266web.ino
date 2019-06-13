@@ -256,6 +256,7 @@ boolean connectWifi(String ssid,String pwd){
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     connectCount = 0;
+    WiFi.setAutoReconnect(true);
     return true;
   }else{
     return false;  
@@ -352,10 +353,9 @@ void uploadFS(){
   if (upload.status == UPLOAD_FILE_START) {
 
     String filename = upload.filename;
-    
-    
+        
     //文件名、长度等基础信息校验
-    if(filename.lenght()>29 || filename.indexOf(" ")>-1){
+    if(filename.length()>29 || filename.indexOf(" ")>-1){
       server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"上传失败,文件长度需要小于29,且不能有非字母数字的字符\"}");
     }
     

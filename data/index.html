@@ -12,6 +12,7 @@
 <style>
 body {padding-top: 50px;}
 </style>
+<link rel="stylesheet" href="/bootstrap.min.css">
 </head>
 <body>
 
@@ -147,7 +148,6 @@ body {padding-top: 50px;}
 
 
 
-<link rel="stylesheet" href="/bootstrap.min.css">
 <script src="/jquery.js"></script>
 <!-- <script src="/bootstrap.min.js"></script> -->
 
@@ -216,13 +216,14 @@ $(function(){
 					}
 					//增加删除事件
 					$("#fs table tbody .btn").click(function(){
+						if(!confirm("是否确认要删除文件?")){return;}
 						$.getJSON("/deleteFS?r="+Math.random(),{"n":($(this).attr("n"))},function(data){
-							if(data.result=="true"){
-								$("#fs table tbody .btn[n='"+ws[w].name+"']").parent().parent().hide(500).remove();
-							}else{
+							if(data.result!="true"){
 								alert(data.msg);
+								$("#navbar a[href='#fs']").click();
 							}
-						});	
+						});
+						$(this).parent().parent().hide("slow").remove();
 					});
 				}else{
 					$("#fs table tbody").append('<tr>'+
@@ -267,10 +268,10 @@ $(function(){
     }
 	//扫描
 	$("#scan").click(function(){
-		$(this).attr("disabled","disabled");
+		$("#scan").attr("disabled",false);
 		$.getJSON("/scanWifi?r="+Math.random(),function(data){
 			var tmp="";
-//			$("#scan-result").html("找到："+data.num+"个<br>");
+			$("#scan-result").html("找到："+data.num+"个<br>");
 			
 			if(data.wifis && data.wifis.length>0){
 				var newData = data.wifis;
