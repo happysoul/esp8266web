@@ -1,21 +1,21 @@
 # esp8266web
 ## 基于ESP8266
 
-##使用 ESP8266开发板，基于Arduino开发
+## 使用 ESP8266开发板，基于Arduino开发
 - 我使用的 NodeMCU 1.0 
 - flash size:4M (1M spiffs)
 
-##功能：
+## 功能：
 - 1、通电后根据保存的多组wifi密码尝试连接，尝试失败后再尝试内置密码连接，如果依旧无法连接wifi则开启AP（名字：8266，密码：happysoul，192.168.4.1）
 - 2、网页功能：基础测试功能、wifi密码配置、spiffs文件（/u/目录下）<br>
 	扫描wifi，暂未实现点击连wifi的功能<br>
 	重启8266的按钮
 
-##TODO	计划增加功能
+## TODO	计划增加功能
 - 1、完善扫描wifi后保存连接的功能
 - 2、完善spiffs文件管理功能：显示spiffs级别信息，文件上传、删除、点击下载
 
-##依赖：
+## 依赖：
 - 1、ESP8266开发板支持<br>
 	工具 - 开发板 - 开发板管理器 搜索esp8266并安装，如果没有这个选择先配网址<br>
 	文件 - 首选项，开发版管理网址输入：https://arduino.esp8266.com/stable/package_esp8266com_index.json 确定后在上一步位置再搜索esp8266<br>
@@ -25,7 +25,7 @@
 	解压缩文件 arduino-1.8.9\tools\ESP8266FS\tool\esp8266fs.jar<br>
 	重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能<br>
 	
-##使用步骤
+## 使用步骤
 - 1、确保依赖已经安装
 - 2、选择开发板及flash size<br>
 	某宝买的带有mini usb接口的一般就选择 NodeMCU 1.0，flash size:4M (1M spiffs) 也就是板载32Mbit，分出来8Mbit空间给spiffs使用<br>
