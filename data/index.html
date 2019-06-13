@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Window-target" content="_top">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1" />
+<meta http-equiv="X-UA-Compatible" content="IE=9" />
+<meta name="renderer" content="webkit">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>web</title>
+<style>
+body {padding-top: 50px;}
+</style>
+</head>
+<body>
+
+<div id="navbar" class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container">
+		<div class="navbar-header">
+		  <a class="navbar-brand" href="#index">控制台</a>
+		  <a class="nav navbar-brand" href="#wifiConfig">WiFi管理</a>
+		  <a class="nav navbar-brand" href="#fs">文件管理</a>
+		</div>
+	</div>
+</div>
+
+<div class="container"><div class="row">&nbsp;</div></div>
+
+
+<div class="nav-tab" id="index">
+<div class="container">
+	<div class="row">
+		<div class="col-md-2"><h4>LED开关:</h4></div>
+		<div class="col-md-10">
+			<button class="btn btn-success" id="ledon">开灯</button>
+			<button class="btn btn-info" id="ledoff">关灯</button>
+			<span class="col-md-offset-0" id="ledout"></span>
+		</div>
+	</div>
+</div>
+
+<div class="container"><div class="row">&nbsp;</div></div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-2"><h4>读写JSON串:</h4></div>
+		<div class="col-md-10">
+			<button class="btn btn-success" id="jsonSave">写config</button>
+			<button class="btn btn-info" id="jsonEdit">读config</button>
+			<button class="btn btn-info" id="jsonDelete">删除密码</button>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-2"></div>
+		<div class="col-md-10" id="json-result">&nbsp;</div>
+	</div>
+</div>
+
+<div class="container"><div class="row">&nbsp;</div></div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-2"><h4>重启ESP8266:</h4></div>
+		<div class="col-md-10">
+			<button class="btn btn-success" id="restartESP">重启</button>
+		</div>
+	</div>
+</div>
+
+<div class="container"><div class="row">&nbsp;</div></div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-2"><h4>扫描WIFI</h4></div>
+		<div class="col-md-2"></div>
+		<div class="col-md-10">
+			<button class="btn btn-success" id="scan">扫描</button>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-2"></div>
+		<div class="col-md-10" id="scan-result"></div>
+	</div>
+</div>
+</div>
+
+<!-- wifi管理 -->
+<div class="nav-tab hidden" id="wifiConfig">
+	<div class="container">
+		<table class="table table-striped">
+		<thead><tr>
+			<th class="text-center">SSID</th>
+			<th class="text-center">密码</th>
+			<th class="text-center">删除</th>
+		</tr></thead>
+		<tbody>
+		</tbody>
+		</table>
+		
+		<div class="form-group">
+		<div class="col-sm-offset-4 col-sm-8">
+		  <button type="submit" class="btn btn-info" id="wifi_addline">加一行</button>
+		  <button type="submit" class="btn btn-success" id="wifi_save">保存</button>
+		</div>
+	  </div>
+  </div>
+</div>
+
+<div class="container"><div class="row">&nbsp;</div></div>
+<!-- 文件管理 -->
+<div class="nav-tab hidden" id="fs">
+	<div class="container">
+		<table class="table table-striped">
+		<thead><tr>
+			<th class="text-center">文件名</th>
+			<th class="text-center">大小</th>
+			<th class="text-center">删除</th>
+		</tr></thead>
+		<tbody>
+		</tbody>
+		</table>
+		删除功能还没写
+  </div>
+</div>
+
+
+
+<link rel="stylesheet" href="/bootstrap.min.css">
+<script src="/jquery.js"></script>
+<!-- <script src="/bootstrap.min.js"></script> -->
+
+<div class="hide">
+<!--[if lt IE 9]><script src="html5shiv.min.js"></script><script src="respond.min.js"></script><![end if]-->
+<!--[if IE 7]><script src="json2.min.js"></script><![endif]-->
+</div>
+
+<script>
+$(function(){
+	// 导航
+	$("#navbar a").click(function(){
+		$(".nav-tab").addClass("hidden");
+		$($(this).attr("href")).removeClass("hidden");
+
+		//wifi显示的时候刷新wifi
+		if(!$("#wifiConfig").hasClass("hidden")){
+			$("#wifiConfig table tbody").empty();
+			$.getJSON("/configWifi?r="+Math.random(),{"a":"edit"},function(data){
+				if(data.result=="true"){
+					var ws = $.parseJSON(data.msg);
+					for(var w in ws){
+						$("#wifiConfig table tbody").append('<tr>'+
+							'<td class="text-center"><input type="text" class="form-control" name="ssid" placeholder="WIFI名" value='+ws[w].ssid+'></td>'+
+							'<td class="text-center"><input type="text" class="form-control" name="pwd" placeholder="密码" value='+ws[w].pwd+'></td>'+
+							'<td class="text-center"><button class="btn btn-danger" onclick="$(this).parents(\'tr\').remove()">删除</button></td></tr>');
+					}
+				}
+			});
+		}
+
+		//文件管理
+		if(!$("#fs").hasClass("hidden")){
+			$("#fs table tbody").empty();
+			$.getJSON("/getUserDir?r="+Math.random(),{},function(data){
+				if(data.result=="true"){
+					var ws = data.files;
+					for(var w in ws){
+						$("#fs table tbody").append('<tr>'+
+							'<td class="text-center">'+ws[w].name+'</td>'+
+							'<td class="text-center">'+ws[w].size+'</td>'+
+							'<td class="text-center"><button class="btn btn-danger" onclick="$(this).parents(\'tr\').remove()">删除</button></td></tr>');
+					}
+				}else{
+					alert(data.msg);
+				}
+			});
+		}
+
+	});
+
+	// 开关灯
+	$("#ledon").click(function(){
+		$.getJSON("/led?r="+Math.random(),{"led":"1"},function(data){
+			$("#ledout").html("LED:"+(data.status==0?"关闭":"打开"));
+		});
+	});
+	$("#ledoff").click(function(){
+		$.getJSON("/led?r="+Math.random(),{"led":"0"},function(data){
+			$("#ledout").html("LED:"+(data.status==0?"关闭":"打开"));
+		});
+	});
+
+
+	// 重启8266
+	$("#restartESP").click(function(){
+		$.getJSON("/restartESP?r="+Math.random(),function(data){
+			if(data.result=="true"){
+				alert("重启请求已经发送");
+			}else{
+				alert("重启失败");
+			}
+		});
+	});
+
+	
+	//根据rssi排序(正序)
+	function up(x,y){
+		if(x.rssi && y.rssi)return y.rssi-x.rssi
+		else return -1;
+    }
+	//扫描
+	$("#scan").click(function(){
+		$(this).attr("disabled","disabled");
+		$.getJSON("/scanWifi?r="+Math.random(),function(data){
+			var tmp="";
+//			$("#scan-result").html("找到："+data.num+"个<br>");
+			
+			if(data.wifis && data.wifis.length>0){
+				var newData = data.wifis;
+				newData.sort(up);
+				for(var wifi in newData){
+					if(newData[wifi].ssid!=null && newData[wifi].rssi){
+						var rssi = newData[wifi].rssi;
+						tmp+='<tr><td>'+newData[wifi].ssid+'</td>'+
+							'<td>'+rssi+(rssi>-50?"<font color=blue> [很好]</font>":(rssi>-80?"<font color=green> [一般]</font>":" <font color=red>[差]</font>"))+'</td>'+
+							'<td>'+newData[wifi].channel+'</td>'+
+							'<td>'+encryptionType(newData[wifi].encryptionType)+'</td>'+
+							'<td class="text-center"><button type="button" class="btn btn-primary scan_connect">连接</button></td></tr>';
+					}
+				}
+
+				var tab = '<table class="table table-bordered" id="scanWifi-table"><caption>找到[ '+data.num+' ]个wifi,可见[ '+data.wifis.length+' ]个</caption>'+
+				'<thead><tr>'+
+				'<th class="text-center">SSID</th>'+
+				'<th class="text-center">信号强度</th>'+
+			    '<th class="text-center">信道</th>'+
+			    '<th class="text-center">加密方式</th>'+
+			    '<th class="text-center">连接Wifi</th>'+
+			    '</tr></thead><tbody>'+
+				tmp+
+				'</tbody></table>';
+
+				$("#scan-result").html(tab+"<br>");
+
+
+				$("#scan-result .scan_connect").click(function(){
+					alert("暂不支持，请从顶部wifi管理页中配置wifi连接");
+				});
+
+			}else{
+				$("#scan-result").html("找到："+data.num+"个,无可见SSID");
+			}
+		});
+		$(this).removeAttr("disabled");
+	});
+
+	//测试保存密码
+	$("#jsonSave").click(function(){
+		var wifis = '[{"ssid":"244","pwd":"happysoul"}]';
+		$.getJSON("/configWifi?r="+Math.random(),{"a":"save","wifis":wifis},function(data){
+			$("#json-result").html(data.msg);
+		});
+	});
+	//测试获取密码
+	$("#jsonEdit").click(function(){
+		$.getJSON("/configWifi?r="+Math.random(),{"a":"edit"},function(data){
+			$("#json-result").html(data.msg);
+		});
+	});
+	//纯测试json功能
+	$("#jsonDelete").click(function(){
+		$.getJSON("/configWifi?r="+Math.random(),{"a":"remove"},function(data){
+			$("#json-result").html(data.msg);
+		});
+	});
+	
+	//每次点加一行对应的内容
+	var wifi_line = '<tr><td class="text-center"><input type="text" class="form-control" name="ssid" placeholder="WIFI名"></td>'+
+				'<td class="text-center"><input type="text" class="form-control" name="pwd" placeholder="密码"></td>'+
+				'<td class="text-center"><button class="btn btn-danger" onclick="$(this).parents(\'tr\').remove()">删除</button></td></tr>';
+	//添加wifi行
+	$("#wifi_addline").click(function(){
+		$("#wifiConfig table tbody").append(wifi_line);
+	});
+	//保存配置
+	$("#wifi_save").click(function(){
+		var wifis = [];
+		$("#wifiConfig table tbody tr").each(function(i,o){
+			var wifi = '{"ssid":"'+$(o).find("input[name='ssid']").val()+'","pwd":"'+$(o).find("input[name='pwd']").val()+'"}';
+			wifis.push(wifi);
+		});
+		if(wifis.length==0){
+			alert("保存数据为空");
+			return;
+		}
+		$.post("/configWifi?r="+Math.random(),{"a":"save","wifis":"["+wifis.join(',')+"]"},function(data){
+			alert(data.msg);
+		},"json");
+	});
+	
+
+})
+
+//根据类型返回wifi加密类型
+function encryptionType(type){
+	switch(type){
+		case "5":return "WEP";break;
+		case "2":return "WPA";break;
+		case "4":return "WPA2";break;
+		case "7":return "无密码";break;
+		case "8":return "WPA / WPA2";break;
+		default:return "未知";
+	}
+}
+
+</script>
+</body>
+</html>
