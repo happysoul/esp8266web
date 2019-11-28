@@ -364,22 +364,25 @@ void uploadFS(){
   if (upload.status == UPLOAD_FILE_START) {
 
     String filename = upload.filename;
+    Serial.print("FileName: ");
+    Serial.println(filename);
         
     //文件名、长度等基础信息校验
     if(filename.length()>29 || filename.indexOf(" ")>-1){
       server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"上传失败,文件长度需要小于29,且不能有非字母数字的字符\"}");
     }
     
-    
     if (!filename.startsWith("/")) {
       filename = "/" + filename;
     }
     filename = "/u"+filename;
-    Serial.print("handleFileUpload Name: ");Serial.println(filename);
+    Serial.print("Name: ");
+    Serial.println(filename);
     fsUploadFile = SPIFFS.open(filename, "w");
     filename = String();
   } else if (upload.status == UPLOAD_FILE_WRITE) {
-    Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
+    Serial.print("uploadFS Data: "); 
+    Serial.println(upload.currentSize);
     if (fsUploadFile) {
       fsUploadFile.write(upload.buf, upload.currentSize);
     }
@@ -387,10 +390,11 @@ void uploadFS(){
     if (fsUploadFile) {
       fsUploadFile.close();
     }
-    Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
+    Serial.print("uploadFS Size: ");
+    Serial.println(upload.totalSize);
   }
   
-  server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传成功\"}");
+  server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传完成\"}");
 }
 
 // OTA升级模式
@@ -518,7 +522,7 @@ void setup() {
   server.on("/scanWifi", scanWifi);//扫wifi
   server.on("/getFS", getFS);//读取spiffs文件系统
   server.on("/deleteFS", deleteFS);//删除spiffs文件
-  server.on("/uploadFS", uploadFS);//删除spiffs文件
+  server.on("/uploadFS", uploadFS);//上传文件
   server.on("/getUserDir", getUserDir);//读取spiffs用户文件
   server.on("/restartESP", restartESP);//重启esp8266
   
