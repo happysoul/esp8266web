@@ -102,7 +102,8 @@ body {padding-top: 50px;}
 		<div class="form-group">
 		<div class="col-sm-offset-4 col-sm-8">
 		  <button type="submit" class="btn btn-info" id="wifi_addline">加一行</button>
-		  <button type="submit" class="btn btn-success" id="wifi_save">保存</button>
+		  <button type="submit" class="btn btn-success" id="wifi_save">保存</button>&nbsp;&nbsp;&nbsp;
+		  <button type="submit" class="btn btn-success" id="jsonEditAlert">读密码</button>
 		</div>
 	  </div>
   </div>
@@ -325,6 +326,13 @@ $(function(){
 			$("#json-result").html(data.msg);
 		});
 	});
+
+	$("#jsonEditAlert").click(function(){
+		$.getJSON("/configWifi?r="+Math.random(),{"a":"edit"},function(data){
+			alert(data.msg);
+		});
+	});
+	
 	//纯测试json功能
 	$("#jsonDelete").click(function(){
 		$.getJSON("/configWifi?r="+Math.random(),{"a":"remove"},function(data){

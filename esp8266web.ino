@@ -5,38 +5,37 @@
 #include <WiFiClient.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
-//需要安装第三方库 ArduinoJson
-#include <ArduinoJson.h>
-//OTA升级依赖
+//OTA升级用
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+//需要安装第三方库 ArduinoJson
+#include <ArduinoJson.h>
 
-// web端口默认为80
 ESP8266WebServer server(80);
 
-// 8266去连wifi. 手动修改这里连接你的路由器
-String ssid     = "244"; // 需要连接的wifi热点名称  
+// 默认机器名字
+const char* host = "8266";
+
+// 手动修改这里连接你的路由器
+String ssid     = "BB4"; // 需要连接的wifi热点名称  
 String password = "happysoul"; // 需要连接的wifi热点密码  
 
-// 8266打开AP让别人连. 如果默认存储的wifi和上面配置的地址无法连接则打开AP等待用户连接
+// 如果默认存储的wifi和上面配置的地址无法连接则打开AP等待用户连接
 String apssid      = "8266";
 String appassword = "happysoul";
 
 // nodemcu 默认板载led灯的编号是D4 对应的常量值是2
-const int led = D4;
-// led灯状态
+const int led = 4;
 String ledStatus = "1";
-// wifi密码文件
-String configFile = "/wifi.ini";
+String configFile = "/config.ini";
 
-// 是否开启OTA升级，生产模式需要改为false
+// 是否开启OTA升级
 boolean otaFlag = true;
 
 /** 
  * 根据文件后缀获取html协议的返回内容类型 
  */
 String getContentType(String filename){
-  //参数包含download或者请求/u/目录下的文件时候，返回类型为下载文件
   if(server.hasArg("download")) return "application/octet-stream";
   else if(filename.startsWith("/u/")) return "application/octet-stream";
   else if(filename.endsWith(".htm")) return "text/html";
@@ -167,7 +166,31 @@ void scanWifi(){
 void configWifi(){
   if(server.hasArg("a")){
     String a = server.arg("a");
-    //读取所有配置
+    /*
+    if(a=="test"){
+      StaticJsonDocument<200> doc;
+      JsonArray arr = doc.to<JsonArray>();
+      JsonObject wifi1 = arr.createNestedObject();
+      JsonObject wifi2 = arr.createNestedObject();
+      wifi1["ssid"] = "ssid1";
+      wifi1["pwd"] = "ssid1_pwd";
+      wifi2["ssid"] = "ssid2";
+      wifi2["pwd"] = "ssid2_pwd";
+      String arrString;
+      serializeJson(arr, arrString);
+
+      //返回输出
+      DynamicJsonDocument result(200);
+      JsonObject reObj = result.to<JsonObject>();
+      reObj["result"]="true";
+      reObj["msg"]=arrString;
+      String output;
+      serializeJson(reObj, output);
+      Serial.println(output);
+      
+      server.send(200, "application/json", output);
+      return;
+    }else */
     if(a=="edit"){
       if(SPIFFS.exists(configFile)){
         File file = SPIFFS.open(configFile, "r");
@@ -192,15 +215,15 @@ void configWifi(){
         server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"file not found\"}");
         return;
       }
-    //保存文件
     }else if(a=="save"){
       if(server.hasArg("wifis")){
-        //保存前先删文件
+        //不知道是否需要先删文件
 //        if(SPIFFS.exists(configFile)){
 //          SPIFFS.remove(configFile);
 //        }
         String wifis = server.arg("wifis");
         File file = SPIFFS.open(configFile, "w");
+        //file.print("[{\"ssid\":\"ssid1\",\"pwd\":\"pwd1\"},{\"ssid\":\"ssid2\",\"pwd\":\"pwd2\"}]");
         file.print(wifis);
         server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"json saved to config.ini\"}");
         return;
@@ -244,6 +267,7 @@ boolean connectWifi(String ssid,String pwd){
     Serial.println(WiFi.localIP());
     connectCount = 0;
     WiFi.setAutoReconnect(true);
+    MDNS.begin(host);
     return true;
   }else{
     return false;  
@@ -340,11 +364,12 @@ void uploadFS(){
   if (upload.status == UPLOAD_FILE_START) {
 
     String filename = upload.filename;
-    
+        
     //文件名、长度等基础信息校验
     if(filename.length()>29 || filename.indexOf(" ")>-1){
       server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"上传失败,文件长度需要小于29,且不能有非字母数字的字符\"}");
     }
+    
     
     if (!filename.startsWith("/")) {
       filename = "/" + filename;
@@ -367,7 +392,6 @@ void uploadFS(){
   
   server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传成功\"}");
 }
-
 
 // OTA升级模式
 void openOTA() {
@@ -411,7 +435,6 @@ void openOTA() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
-
 
 // 主程序入口
 void setup() {
@@ -502,17 +525,19 @@ void setup() {
   server.onNotFound(handleNotFound); // NotFound处理，图片、js、css等也会走这里
   server.begin();
   Serial.println("HTTP server started");
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("Ready! Open http://%s.local in your browser\n", host);
 
   if(otaFlag){
     openOTA();
     Serial.println("Open OTA");
   }
-  
 }
 
 void loop(){
- // 循环处理,因为ESP8266的自带的中断已经被系统占用,只能用过循环的方式来处理网络请求
- server.handleClient();
+  // 循环处理,因为ESP8266的自带的中断已经被系统占用,只能用过循环的方式来处理网络请求
+  server.handleClient();
+  MDNS.update();
   if(otaFlag){
     // 增加升级功能
     ArduinoOTA.handle();
