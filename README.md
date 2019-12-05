@@ -16,7 +16,7 @@
 
 ## TODO	计划增加功能
 - 1、完善扫描wifi后保存连接的功能
-- 2、完善spiffs文件管理功能：文件上传
+- 2、完善spiffs文件管理功能：文件上传(暂时只能上传2k的数据，未知问题)
 
 ## 依赖：
 - 1、ESP8266开发板支持<br>
@@ -24,7 +24,7 @@
 	文件 - 首选项，开发版管理网址输入：https://arduino.esp8266.com/stable/package_esp8266com_index.json 确定后在上一步位置再搜索esp8266<br>
 	安装大约需要下载100M-200M的文件<br>
 - 2、[ArduinoJSON](https://github.com/bblanchon/ArduinoJson)（项目-加载库-搜索ArduinoJSON并安装）
-- 3、[ESP8266FS](https://github.com/esp8266/arduino-esp8266fs-plugin)  / [下载文件](https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.4.0/ESP8266FS-0.4.0.zip)<br>
+- 3、[ESP8266FS](https://github.com/esp8266/arduino-esp8266fs-plugin)  / [下载文件](https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.5.0/ESP8266FS-0.5.0.zip)<br>
 	解压缩文件 arduino-1.8.9\tools\ESP8266FS\tool\esp8266fs.jar<br>
 	重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能<br>
 	
