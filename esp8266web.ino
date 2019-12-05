@@ -17,20 +17,24 @@ ESP8266WebServer server(80);
 const char* host = "8266";
 
 // 手动修改这里连接你的路由器
-String ssid     = "BB4"; // 需要连接的wifi热点名称  
+String ssid     = "234"; // 需要连接的wifi热点名称  
 String password = "happysoul"; // 需要连接的wifi热点密码  
 
 // 如果默认存储的wifi和上面配置的地址无法连接则打开AP等待用户连接
 String apssid      = "8266";
 String appassword = "happysoul";
 
-// nodemcu 默认板载led灯的编号是D4 对应的常量值是2
-const int led = 4;
+// nodemcu 默认板载led灯的编号是D4 对应的常量值是2,12F等板子可能是4
+const int led = 2;
 String ledStatus = "1";
 String configFile = "/config.ini";
 
 // 是否开启OTA升级
 boolean otaFlag = true;
+
+
+// 上传文件用
+File fsUploadFile;
 
 /** 
  * 根据文件后缀获取html协议的返回内容类型 
@@ -358,15 +362,13 @@ void getFS(){
 
 //上传文件
 void uploadFS(){
-  //上传
-  File fsUploadFile;
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) {
 
     String filename = upload.filename;
     Serial.print("FileName: ");
     Serial.println(filename);
-        
+    
     //文件名、长度等基础信息校验
     if(filename.length()>29 || filename.indexOf(" ")>-1){
       server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"上传失败,文件长度需要小于29,且不能有非字母数字的字符\"}");
@@ -522,7 +524,7 @@ void setup() {
   server.on("/scanWifi", scanWifi);//扫wifi
   server.on("/getFS", getFS);//读取spiffs文件系统
   server.on("/deleteFS", deleteFS);//删除spiffs文件
-  server.on("/uploadFS", uploadFS);//上传文件
+  server.on("/uploadFS",HTTP_POST,[](){ server.send(200); },uploadFS);//上传文件
   server.on("/getUserDir", getUserDir);//读取spiffs用户文件
   server.on("/restartESP", restartESP);//重启esp8266
   
@@ -541,9 +543,9 @@ void setup() {
 void loop(){
   // 循环处理,因为ESP8266的自带的中断已经被系统占用,只能用过循环的方式来处理网络请求
   server.handleClient();
-  MDNS.update();
   if(otaFlag){
     // 增加升级功能
     ArduinoOTA.handle();
   }
+//  MDNS.update();
 }
