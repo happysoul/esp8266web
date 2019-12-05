@@ -38,3 +38,14 @@
 	这个步骤做的是将 data 文件夹下的文件复制到 esp8266 的spiffs空间中<br>
 	如果只修改了 data 文件夹中的内容不需要上传 ino 程序，只需要上传文件即可<br>
 	同理，如果只修改了 ino 文件，则不需要重复上传 data 的文件<br>
+
+ide配置和预览图片在png目录下
+
+![Image text](https://raw.githubusercontent.com/happysoul/esp8266web/master/png/ide.png)
+
+![Image text](https://raw.githubusercontent.com/happysoul/esp8266web/master/png/01.png)
+
+![Image text](https://raw.githubusercontent.com/happysoul/esp8266web/master/png/02.png)
+
+![Image text](https://raw.githubusercontent.com/happysoul/esp8266web/master/png/03.png)
+
