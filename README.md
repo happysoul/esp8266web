@@ -2,7 +2,7 @@
 
 ## 使用 ESP8266开发板，基于Arduino开发
 - 我使用的 NodeMCU 1.0 
-- flash size:4M (1M spiffs)
+- flash size:4M (FS:3MB OTA:~512KB)
 
 ## 功能：
 - 1、通电后根据保存的多组wifi密码尝试连接，尝试失败后再尝试内置密码连接，如果依旧无法连接wifi则开启AP（名字：8266，密码：happysoul，192.168.4.1）
@@ -31,8 +31,8 @@
 ## 使用步骤
 - 1、确保依赖已经安装
 - 2、选择开发板及flash size<br>
-	某宝买的带有mini usb接口的一般就选择 NodeMCU 1.0，flash size:4M (1M spiffs) 也就是板载32Mbit，分出来8Mbit空间给spiffs使用<br>
-	如果你是 ESP8266 8针脚的，那么你板载flash就是 8Mbit 也就是使用的时候需要选择 1M(512k spiffs)<br>
+	某宝买的带有mini usb接口的一般就选择 NodeMCU 1.0，flash size:4M (FS:3MB OTA:~512KB) 也就是板载32Mbit，分出来24Mbit空间给spiffs使用,其中部分空间预留给OTA升级使用<br>
+	如果你是 ESP8266 8针脚的，那么你板载flash就是 8Mbit 也就是使用的时候需要选择 1M(FS:512KB OTA:~246KB)<br>
 - 3、编译上传
 - 4、工具 - ESP8266 Sketch Data Upload<br>
 	这个步骤做的是将 data 文件夹下的文件复制到 esp8266 的spiffs空间中<br>
