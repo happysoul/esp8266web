@@ -254,10 +254,10 @@ boolean connectWifi(String ssid,String pwd){
   int connectCount = 0;  
   WiFi.begin(ssid, pwd);  
   while(WiFi.status() != WL_CONNECTED) { 
-    delay(1000);  
+    delay(500);  
     Serial.print(".");
     // 重连10次
-    if(connectCount > 10) {  
+    if(connectCount > 5) {  
       Serial.println("Connect fail!");  
       break;  
     }  
@@ -363,40 +363,49 @@ void getFS(){
 //上传文件
 void uploadFS(){
   HTTPUpload& upload = server.upload();
+  Serial.print("-- upload status:");
+  Serial.println(upload.status);
+  
   if (upload.status == UPLOAD_FILE_START) {
 
     String filename = upload.filename;
-    Serial.print("FileName: ");
+    Serial.print("1.FileName: ");
     Serial.println(filename);
     
     //文件名、长度等基础信息校验
     if(filename.length()>29 || filename.indexOf(" ")>-1){
       server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"上传失败,文件长度需要小于29,且不能有非字母数字的字符\"}");
+      return;
     }
     
     if (!filename.startsWith("/")) {
       filename = "/" + filename;
     }
     filename = "/u"+filename;
-    Serial.print("Name: ");
-    Serial.println(filename);
+    // 重新设置名字
     fsUploadFile = SPIFFS.open(filename, "w");
     filename = String();
   } else if (upload.status == UPLOAD_FILE_WRITE) {
-    Serial.print("uploadFS Data: "); 
-    Serial.println(upload.currentSize);
+    int currentSize = upload.currentSize;
+    Serial.print("2.Data size: "); 
+    Serial.println(currentSize);
     if (fsUploadFile) {
-      fsUploadFile.write(upload.buf, upload.currentSize);
+      fsUploadFile.write(upload.buf, currentSize);
     }
   } else if (upload.status == UPLOAD_FILE_END) {
+    Serial.println("3.To be close"); 
     if (fsUploadFile) {
       fsUploadFile.close();
     }
-    Serial.print("uploadFS Size: ");
+    Serial.print("3.Totle Size: ");
     Serial.println(upload.totalSize);
+
+    //上传完了再返回
+    server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传完成\"}");
+  } else{
+    Serial.println("4.end");  
   }
   
-  server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传完成\"}");
 }
 
 // OTA升级模式
@@ -491,7 +500,7 @@ void setup() {
       WiFi.mode(WIFI_AP);
       //WIFI_AP_STA模式不稳定，不建议使用
 //      WiFi.mode(WIFI_AP_STA);
-      delay(1000);
+      delay(500);
       /*
       ssid:热点名,最大63个英文字符
       password:可选参数,可以没有密码
@@ -531,12 +540,13 @@ void setup() {
   server.onNotFound(handleNotFound); // NotFound处理，图片、js、css等也会走这里
   server.begin();
   Serial.println("HTTP server started");
-  MDNS.addService("http", "tcp", 80);
-  Serial.printf("Ready! Open http://%s.local in your browser\n", host);
+//  MDNS.addService("http", "tcp", 80);
+//  Serial.printf("Ready! Open http://%s.local in your browser\n", host);
 
   if(otaFlag){
+    Serial.println("Open OTA start");
     openOTA();
-    Serial.println("Open OTA");
+    Serial.println("Open OTA started");
   }
 }
 

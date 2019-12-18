@@ -330,7 +330,7 @@ $(function(){
 
 	//测试保存密码
 	$("#jsonSave").click(function(){
-		var wifis = '[{"ssid":"244","pwd":"happysoul"}]';
+		var wifis = '[{"ssid":"234","pwd":"happysoul"}]';
 		$.getJSON("/configWifi?r="+Math.random(),{"a":"save","wifis":wifis},function(data){
 			$("#json-result").html(data.msg);
 		});
