@@ -297,6 +297,7 @@ $(function(){
 						var rssi = newData[wifi].rssi;
 						tmp+='<tr><td>'+newData[wifi].ssid+'</td>'+
 							'<td>'+rssi+(rssi>-50?"<font color=blue> [很好]</font>":(rssi>-80?"<font color=green> [一般]</font>":" <font color=red>[差]</font>"))+'</td>'+
+							'<td>'+newData[wifi].bssidstr+'</td>'+
 							'<td>'+newData[wifi].channel+'</td>'+
 							'<td>'+encryptionType(newData[wifi].encryptionType)+'</td>'+
 							'<td class="text-center"><button type="button" class="btn btn-primary scan_connect">连接</button></td></tr>';
@@ -306,7 +307,8 @@ $(function(){
 				var tab = '<table class="table table-bordered" id="scanWifi-table"><caption>找到[ '+data.num+' ]个wifi,可见[ '+data.wifis.length+' ]个</caption>'+
 				'<thead><tr>'+
 				'<th class="text-center">SSID</th>'+
-				'<th class="text-center">信号强度</th>'+
+				'<th class="text-center">信号强度(RSSI)</th>'+
+			    '<th class="text-center">BSSID</th>'+
 			    '<th class="text-center">信道</th>'+
 			    '<th class="text-center">加密方式</th>'+
 			    '<th class="text-center">连接Wifi</th>'+

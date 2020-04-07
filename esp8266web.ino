@@ -142,6 +142,7 @@ void scanWifi(){
       wifi["ssid"]=String(WiFi.SSID(i).c_str());
       wifi["rssi"]=String(WiFi.RSSI(i));
 //      wifi["bssid"]=String(WiFi.BSSID(i));
+      wifi["bssidstr"]=String(WiFi.BSSIDstr(i));
       wifi["channel"]=String(WiFi.channel(i));
 //      wifi["hidden"]=String(WiFi.isHidden(i));
       wifi["encryptionType"]=String(WiFi.encryptionType(i));
