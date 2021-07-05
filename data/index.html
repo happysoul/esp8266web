@@ -69,6 +69,18 @@ body {padding-top: 50px;}
 	</div>
 </div>
 
+<!-- 自定义添加一个新按钮 开始 -->
+<div class="container">
+	<div class="row">
+		<div class="col-md-2"><h4>重启ESP8266:</h4></div>
+		<div class="col-md-10">
+			<!-- 新按钮需要修改id值如下userButton1，全局唯一，不可重复，然后修改js脚本调用 -->
+			<button class="btn btn-success" id="userButton1">自定义按钮1</button>
+		</div>
+	</div>
+</div>
+<!-- 自定义添加一个新按钮 结束-->
+
 <div class="container"><div class="row">&nbsp;</div></div>
 
 <div class="container">
@@ -272,6 +284,19 @@ $(function(){
 				alert("重启请求已经发送");
 			}else{
 				alert("重启失败");
+			}
+		});
+	});
+
+	// 用户自定义按钮1对应事件（使用井号加前面的id）
+	$("#userButton1").click(function(){
+		// ino中需要配置接收请求的路径，如下userButton1
+		$.getJSON("/userButton1?r="+Math.random(),function(data){
+			//这里data是ino代码返回的结果
+			if(data.result=="true"){
+				alert("返回结果："+data.msg)
+			}else{
+				alert("失败返回结果："+data.msg);
 			}
 		});
 	});

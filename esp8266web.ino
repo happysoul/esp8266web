@@ -1,4 +1,3 @@
-
 #include "Arduino.h"
 #include <FS.h>
 #include <ESP8266WiFi.h>
@@ -11,16 +10,19 @@
 //需要安装第三方库 ArduinoJson
 #include <ArduinoJson.h>
 
+//web服务器使用80端口
 ESP8266WebServer server(80);
 
 // 默认机器名字
 const char* host = "8266";
 
 // 手动修改这里连接你的路由器
+// 把234换成你路由器wifi的名字，密码是你路由器wifi的密码
 String ssid     = "234"; // 需要连接的wifi热点名称  
 String password = "happysoul"; // 需要连接的wifi热点密码  
 
 // 如果默认存储的wifi和上面配置的地址无法连接则打开AP等待用户连接
+// 这个是8266开AP之后你手机或电脑可以搜到8266，密码是happysoul
 String apssid      = "8266";
 String appassword = "happysoul";
 
@@ -31,7 +33,6 @@ String configFile = "/config.ini";
 
 // 是否开启OTA升级
 boolean otaFlag = true;
-
 
 // 上传文件用
 File fsUploadFile;
@@ -106,8 +107,10 @@ void handleIndex(){
 
 //板载led开关
 void handleLed(){
+  //判断请求中是否有led这个参数
   if(server.hasArg("led")){
     String a = server.arg("led");
+    // 根据页面传递的0 1处理开关灯
     if(a=="0"){
       ledStatus="0";
       digitalWrite(led, HIGH);
@@ -135,7 +138,7 @@ void scanWifi(){
     StaticJsonDocument<1024> doc;
     JsonArray array = doc.to<JsonArray>();
     for(int i = 1; i <= n; i++){
-      //如果wifi隐藏则跳过
+      //如果wifi隐藏ssid则跳过
       if(WiFi.isHidden(i))continue;
       
       JsonObject wifi = array.createNestedObject();
@@ -144,9 +147,11 @@ void scanWifi(){
 //      wifi["bssid"]=String(WiFi.BSSID(i));
       wifi["bssidstr"]=String(WiFi.BSSIDstr(i));
       wifi["channel"]=String(WiFi.channel(i));
+      //是否是隐藏的ssid
 //      wifi["hidden"]=String(WiFi.isHidden(i));
       wifi["encryptionType"]=String(WiFi.encryptionType(i));
       /*
+      扫描代码后返回值对应的加密类型
       5 : ENC_TYPE_WEP - WEP
       2 : ENC_TYPE_TKIP - WPA / PSK
       4 : ENC_TYPE_CCMP - WPA2 / PSK
@@ -288,6 +293,22 @@ void restartESP(){
   ESP.restart();
 }
 
+
+// 新加功能代码样例
+// ----------------------------------------------------------------------------------------
+// 用户自定义按钮userButton1对应事件
+void userButton1(){
+  Serial.println("userButton1!!");
+
+  //中间位置写你要执行的事件，开关灯或者调用显示屏等功能
+  
+  //自定义返回值，我这里定义result为成功失败，meg用于显示处理结果
+  server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"OK\"}");
+  //根据前面执行结果使用if else 输出不同的返回结果，如true，false
+  //server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"fail\"}");
+}
+// ----------------------------------------------------------------------------------------
+
 //读取用户目录下的文件夹列表
 void getUserDir(){
   DynamicJsonDocument doc(512);
@@ -316,6 +337,7 @@ void getUserDir(){
   serializeJson(doc, output);
   server.send(200, "application/json", output);
 }
+
 
 //删除fs文件
 void deleteFS(){
@@ -401,7 +423,7 @@ void uploadFS(){
     Serial.print("3.Totle Size: ");
     Serial.println(upload.totalSize);
 
-    //上传完了再返回
+    //上传完成，返回成功
     server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"上传完成\"}");
   } else{
     Serial.println("4.end");  
@@ -409,7 +431,7 @@ void uploadFS(){
   
 }
 
-// OTA升级模式
+// 开启OTA模式（开关在最上面otaFlag=true/false,对应setup代码最后位置）
 void openOTA() {
   ArduinoOTA.onStart([]() {
     String type;
@@ -515,6 +537,8 @@ void setup() {
       IPAddress subnet(255,255,255,0);
       WiFi.softAPConfig(local_IP, gateway, subnet);
       */
+
+	  //打开AP模式 默认地址是 192.168.4.1
       boolean ap_status = WiFi.softAP(apssid, appassword);
       if(ap_status){
         Serial.println("AP Ready!!");
@@ -537,13 +561,21 @@ void setup() {
   server.on("/uploadFS",HTTP_POST,[](){ server.send(200); },uploadFS);//上传文件
   server.on("/getUserDir", getUserDir);//读取spiffs用户文件
   server.on("/restartESP", restartESP);//重启esp8266
+
+  //用户自定义按钮（2个参数，前面是html中的js代码访问的地址，后面是function方法，在上面）
+  //对应web请求地址是 http://192.168.4.1/userButton1 
+  //AP模式地址是 192.168.4.1，客户端模式是你实际分配到的ip
+  server.on("/userButton1", userButton1);
+  //如果还有其他请求写在这里
   
   server.onNotFound(handleNotFound); // NotFound处理，图片、js、css等也会走这里
+  //启动web服务
   server.begin();
   Serial.println("HTTP server started");
 //  MDNS.addService("http", "tcp", 80);
 //  Serial.printf("Ready! Open http://%s.local in your browser\n", host);
 
+  //是否开启ota升级功能
   if(otaFlag){
     Serial.println("Open OTA start");
     openOTA();
