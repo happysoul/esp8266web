@@ -7,7 +7,10 @@
 ## 文件结构
 - data文件夹，使用工具上传到spiffs空间中。库文件使用gz进行压缩，减少http访问时间，网页显示内容都在index.html中，u文件夹为用户上传下载目录
 - png系统运行截图，用于展示部署后可以看到的web界面
-- esp8266web.ino arduino程序文件
+- esp8266web.ino arduino程序文件。ota.ino和web.ino中的方法会在被引用时候自动随esp8266web.ino一同编译
+- ota.ino 升级相关代码
+- web.ino web请求拆分放到此文件中
+
 
 ## 功能：
 - 1、通电后根据保存的多组wifi密码尝试连接，尝试失败后再尝试内置密码连接，如果依旧无法连接wifi则开启AP（名字：8266，密码：happysoul，192.168.4.1）
@@ -58,6 +61,6 @@ ide配置和预览图片在png目录下
 ## 添加新按钮及后台代码方法
 
 - 1、修改网页。修改 data/index.html。搜索 userButton1 可以看到2部分代码，html和js，分别对应页面显示和点击按钮事件
-- 2、修改ino文件。需要注册url的响应代码：server.on("/userButton1", userButton1);然后在 void userButton1(){}中写入你的响应事件
+- 2、修改web.ino文件。需要注册url的响应代码：server.on("/userButton1", userButton1);然后在 void userButton1(){}中写入你的响应事件
 
 同理如果需要加按钮可以复制上面样例代码可以扩展多个按钮
