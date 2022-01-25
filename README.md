@@ -35,6 +35,7 @@
 - 3、[ESP8266FS](https://github.com/esp8266/arduino-esp8266fs-plugin)  / [下载文件](https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.5.0/ESP8266FS-0.5.0.zip)<br>
 	解压缩文件 arduino-1.8.9\tools\ESP8266FS\tool\esp8266fs.jar<br>
 	重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能<br>
+	LittleFS 等效于上面的工具(官方几乎放弃SPIFFS更换为LittleFS) https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases <br>
 	
 ## 使用步骤
 - 1、确保依赖已经安装
