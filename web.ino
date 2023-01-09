@@ -1,6 +1,7 @@
 
 // 配置web请求及响应function
 void configweb(){
+  //默认请求/u/目录下的文件是下载，详细看getContentType方法中的配置
   //配置web服务响应连接
   server.on("/", handleIndex);//主页
   server.on("/led", handleLed);//led灯
@@ -71,12 +72,12 @@ void handleNotFound() {
   Serial.print("url : "+path + " - ");
   String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
-  if(SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)){
-    if(SPIFFS.exists(pathWithGz)){
+  if(LittleFS.exists(pathWithGz) || LittleFS.exists(path)){
+    if(LittleFS.exists(pathWithGz)){
       path += ".gz";
     }
     Serial.println(path);
-    File file = SPIFFS.open(path, "r");
+    File file = LittleFS.open(path, "r");
     server.streamFile(file, contentType);
     file.close();  
     return;
@@ -98,14 +99,16 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
+
+//如果没有上传data文件夹，默认会提示未发现文件给页面
 void handleIndex(){
   /* 返回信息给浏览器（状态码，Content-type， 内容） 
    * 这里是访问当前设备ip直接返回一个String 
    */
   Serial.println("/index.html");
   // 判断文件是否存在
-  if(SPIFFS.exists("/index.html")){
-    File file = SPIFFS.open("/index.html","r");
+  if(LittleFS.exists("/index.html")){
+    File file = LittleFS.open("/index.html","r");
     server.streamFile(file,"text/html");
     file.close();
   }else{
@@ -149,7 +152,8 @@ void scanWifi(){
     JsonArray array = doc.to<JsonArray>();
     for(int i = 1; i <= n; i++){
       //如果wifi隐藏ssid则跳过
-      if(WiFi.isHidden(i))continue;
+//      if(WiFi.isHidden(i))continue;
+      if(WiFi.SSID(i)=="")continue;
       
       JsonObject wifi = array.createNestedObject();
       wifi["ssid"]=String(WiFi.SSID(i).c_str());
@@ -213,8 +217,8 @@ void configWifi(){
       return;
     }else */
     if(a=="edit"){
-      if(SPIFFS.exists(configFile)){
-        File file = SPIFFS.open(configFile, "r");
+      if(LittleFS.exists(configFile)){
+        File file = LittleFS.open(configFile, "r");
         DynamicJsonDocument doc(512);
         deserializeJson(doc, file);
         JsonArray arr = doc.as<JsonArray>();
@@ -239,11 +243,11 @@ void configWifi(){
     }else if(a=="save"){
       if(server.hasArg("wifis")){
         //不知道是否需要先删文件
-//        if(SPIFFS.exists(configFile)){
-//          SPIFFS.remove(configFile);
+//        if(LittleFS.exists(configFile)){
+//          LittleFS.remove(configFile);
 //        }
         String wifis = server.arg("wifis");
-        File file = SPIFFS.open(configFile, "w");
+        File file = LittleFS.open(configFile, "w");
         //file.print("[{\"ssid\":\"ssid1\",\"pwd\":\"pwd1\"},{\"ssid\":\"ssid2\",\"pwd\":\"pwd2\"}]");
         file.print(wifis);
         server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"json saved to config.ini\"}");
@@ -253,8 +257,8 @@ void configWifi(){
         return;
       }
     }else if(a=="remove"){
-      if(SPIFFS.exists(configFile)){
-        SPIFFS.remove(configFile);
+      if(LittleFS.exists(configFile)){
+        LittleFS.remove(configFile);
       }
       server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"Removed\"}");
     }else{
@@ -282,7 +286,21 @@ void getUserDir(){
   JsonArray array = doc.createNestedArray("files");
 
   //读取文件夹
-  Dir dir = SPIFFS.openDir("/u");
+#ifdef ESP32  
+  File dir = LittleFS.open("/u");
+  if(dir.isDirectory()){
+    File dir_file = dir.openNextFile();
+    while(dir_file){
+      JsonObject file = array.createNestedObject();
+      file["name"]=String(dir_file.name());
+      file["size"]=String(dir_file.size());
+      dir_file = dir.openNextFile();
+    }
+  }
+#endif
+
+#ifdef ESP8266
+  Dir dir = LittleFS.openDir("/u");
   while (dir.next()) {
     JsonObject file = array.createNestedObject();
     File f = dir.openFile("r");
@@ -290,6 +308,7 @@ void getUserDir(){
     file["size"]=String(f.size());
     f.close();      
   }
+#endif
 
   if(array.size()==0){
     jo["result"]="false";
@@ -311,8 +330,8 @@ void deleteFS(){
     String n = server.arg("n");
     if(n.length()>31 || n.length()==0){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,参数长度异常\"}");return;}
     if(n.indexOf("..")>-1 || n.indexOf("/u/")!=0){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,参数非法\"}");return;}
-    if(!SPIFFS.exists(n)){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,文件不存在\"}");return;}
-    else{SPIFFS.remove(n);server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"删除成功\"}");return;}
+    if(!LittleFS.exists(n)){server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,文件不存在\"}");return;}
+    else{LittleFS.remove(n);server.send(200, "application/json", "{\"result\":\"true\",\"msg\":\"删除成功\"}");return;}
   }else{
     server.send(200, "application/json", "{\"result\":\"false\",\"msg\":\"删除失败,参数缺失\"}"); 
   }
@@ -330,18 +349,32 @@ void deleteFS(){
 void getFS(){
   DynamicJsonDocument doc(512);
   JsonObject jo = doc.to<JsonObject>();
-  
-  FSInfo fs;
-  SPIFFS.info(fs);
 
+#ifdef ESP8266
+  FSInfo fs_info;
+  LittleFS.info(fs_info);
+  
   jo["result"]="true";
   jo["msg"]="文件系统信息读取完成";
-  jo["totalBytes"]=String(fs.totalBytes);
-  jo["usedBytes"]=String(fs.usedBytes);
-  jo["blockSize"]=String(fs.blockSize);
-  jo["pageSize"]=String(fs.pageSize);
-  jo["maxOpenFiles"]=String(fs.maxOpenFiles);
-  jo["maxPathLength"]=String(fs.maxPathLength);
+  jo["totalBytes"]=String(fs_info.totalBytes);
+  jo["usedBytes"]=String(fs_info.usedBytes);
+  jo["blockSize"]=String(fs_info.blockSize);
+  jo["pageSize"]=String(fs_info.pageSize);
+  jo["maxOpenFiles"]=String(fs_info.maxOpenFiles);
+  jo["maxPathLength"]=String(fs_info.maxPathLength);
+#endif  
+
+//esp32没有实现info方法
+#ifdef ESP32
+  jo["result"]="true";
+  jo["msg"]="文件系统信息读取完成";
+  jo["totalBytes"]="";//String(fs.totalBytes);
+  jo["usedBytes"]="";//String(fs.usedBytes);
+  jo["blockSize"]="";//String(fs.blockSize);
+  jo["pageSize"]="";//String(fs.pageSize);
+  jo["maxOpenFiles"]="";//String(fs.maxOpenFiles);
+  jo["maxPathLength"]="";//String(fs.maxPathLength);
+#endif
   
   String output;
   serializeJson(doc, output);
@@ -372,7 +405,7 @@ void uploadFS(){
     }
     filename = "/u"+filename;
     // 重新设置名字
-    fsUploadFile = SPIFFS.open(filename, "w");
+    fsUploadFile = LittleFS.open(filename, "w");
     filename = String();
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     int currentSize = upload.currentSize;

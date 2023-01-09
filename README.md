@@ -2,24 +2,26 @@
 
 ## 使用 ESP8266开发板，基于Arduino开发
 - 我使用的 NodeMCU 1.0 
-- flash size:4M (FS:3MB OTA:~512KB)
+- flash size:4M (FS:2MB OTA:~1019KB) 只要不选FS:none就行
+
+2023-01-09 修改LittleFS，代码适配ESP32（无法显示文件系统的信息，ESP32的代码没有实现这部分功能，无法判断隐藏网络，同样是ESP32没有实现这个功能）
 
 ## 文件结构
-- data文件夹，使用工具上传到spiffs空间中。库文件使用gz进行压缩，减少http访问时间，网页显示内容都在index.html中，u文件夹为用户上传下载目录
+- data文件夹，使用工具上传到LittleFS空间中。库文件使用gz进行压缩，减少http访问时间，网页显示内容都在index.html中，u文件夹为用户上传下载目录
 - png系统运行截图，用于展示部署后可以看到的web界面
-- esp8266web.ino arduino程序文件。ota.ino和web.ino中的方法会在被引用时候自动随esp8266web.ino一同编译
+- esp8266web.ino arduino程序文件(ota.ino和web.ino中的方法自动随esp8266web.ino一同编译)
 - ota.ino 升级相关代码
 - web.ino web请求拆分放到此文件中
 
 
 ## 功能：
 - 1、通电后根据保存的多组wifi密码尝试连接，尝试失败后再尝试内置密码连接，如果依旧无法连接wifi则开启AP（名字：8266，密码：happysoul，192.168.4.1）
-- 2、网页功能：基础测试功能、wifi密码配置、spiffs文件（/u/目录下）<br>
+- 2、网页功能：基础测试功能、wifi密码配置、LittleFS文件（/u/目录下）<br>
 	开关板载LED，读写JSON文件
 	扫描wifi，暂未实现点击连wifi的功能<br>
 	重启8266的按钮<br>
-	显示spiffs信息，显示文件列表，删除文件
-	文件上传，下载到spiffs
+	显示LittleFS信息，显示文件列表，删除文件
+	文件上传，下载到LittleFS
 - 3、OTA升级：默认打开了OTA升级功能，也就是说程序烧到板子以后默认打开了网络升级功能，不需要串口了，随便找个5V或者3.3V的供电就可以了。<br>
 	只需要电脑和8266在同一个网络下，重启arduino IDE 在选择com口的位置就能看到8266的ip可以选择。
 
@@ -32,19 +34,22 @@
 	文件 - 首选项，开发版管理网址输入：https://arduino.esp8266.com/stable/package_esp8266com_index.json 确定后在上一步位置再搜索esp8266<br>
 	安装大约需要下载100M-200M的文件<br>
 - 2、[ArduinoJSON](https://github.com/bblanchon/ArduinoJson)（项目-加载库-搜索ArduinoJSON并安装）
-- 3、[ESP8266FS](https://github.com/esp8266/arduino-esp8266fs-plugin)  / [下载文件](https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.5.0/ESP8266FS-0.5.0.zip)<br>
-	解压缩文件 arduino-1.8.9\tools\ESP8266FS\tool\esp8266fs.jar<br>
-	重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能<br>
-	LittleFS 等效于上面的工具(官方几乎放弃SPIFFS更换为LittleFS) https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases <br>
+- 3、~~[ESP8266FS](https://github.com/esp8266/arduino-esp8266fs-plugin)  / [下载文件](https://github.com/esp8266/arduino-esp8266fs-plugin/releases/download/0.5.0/ESP8266FS-0.5.0.zip)~~<br>
+	~~解压缩文件 arduino-1.8.19\tools\ESP8266FS\tool\esp8266fs.jar~~<br>
+	~~重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能~~<br>
+	ESP8266FS只适用于使用了 SPIFFS 代码的工程上传用<br>
+	新代码使用了 LittleFS (官方弃用SPIFFS改为LittleFS) https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases <br>
+	解压缩文件夹到 Arduino目录下 arduino-1.8.19\tools\<br>
 	
 ## 使用步骤
 - 1、确保依赖已经安装
 - 2、选择开发板及flash size<br>
-	某宝买的带有mini usb接口的一般就选择 NodeMCU 1.0，flash size:4M (FS:3MB OTA:~512KB) 也就是板载32Mbit，分出来24Mbit空间给spiffs使用,其中部分空间预留给OTA升级使用<br>
+	某宝买的带有mini usb接口的一般就选择 NodeMCU 1.0，flash size:4M (FS:2MB OTA:~1019KB) 也就是板载32Mbit，分出来16Mbit空间(2MB)给LittleFS使用,其中部分空间预留给OTA升级使用<br>
 	如果你是 ESP8266 8针脚的，那么你板载flash就是 8Mbit 也就是使用的时候需要选择 1M(FS:512KB OTA:~246KB)<br>
 - 3、编译上传
-- 4、工具 - ESP8266 Sketch Data Upload<br>
-	这个步骤做的是将 data 文件夹下的文件复制到 esp8266 的spiffs空间中<br>
+- 4、工具 ~~ESP8266 Sketch Data Upload~~ 原来的工具只适用于SPIFFS文件系统使用<br>
+	使用 ESP8266 LittleFS Data Upload
+	这个步骤做的是将 data 文件夹下的文件复制到 esp8266 的LittleFS空间中<br>
 	如果只修改了 data 文件夹中的内容不需要上传 ino 程序，只需要上传文件即可<br>
 	同理，如果只修改了 ino 文件，则不需要重复上传 data 的文件<br>
 
