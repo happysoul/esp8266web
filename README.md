@@ -38,7 +38,10 @@
 	~~解压缩文件 arduino-1.8.19\tools\ESP8266FS\tool\esp8266fs.jar~~<br>
 	~~重启arduino，工具菜单下就能看到ESP8266 Sketch Data Upload功能~~<br>
 	ESP8266FS只适用于使用了 SPIFFS 代码的工程上传用<br>
-	新代码使用了 LittleFS (官方弃用SPIFFS改为LittleFS) https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases <br>
+	新代码使用了 LittleFS (官方弃用SPIFFS改为LittleFS)<br>
+	ESP8266上传使用 [ESP8266FS](https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases) <br>
+	ESP32上传使用 [esp32littlefs](https://github.com/lorol/arduino-esp32littlefs-plugin) <br>
+	做了ESP32的兼容，但获取文件系统的函数ESP32没有提供，所以这部分是空 <br>
 	解压缩文件夹到 Arduino目录下 arduino-1.8.19\tools\<br>
 	
 ## 使用步骤
